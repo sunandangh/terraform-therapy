@@ -6,6 +6,11 @@ module "vpc" {
   source = "../vpc"  # Adjust the path to your VPC module
 }
 
+# module "load_balancer" {
+#   source = "../load-balancer"
+  
+# }
+
 # Security group for backend EC2 instance
 resource "aws_security_group" "backend_sg" {
   name   = "backend-sg"
@@ -15,7 +20,21 @@ resource "aws_security_group" "backend_sg" {
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/24"]  # Allow traffic from the VPC
+    # security_groups = [module.load_balancer.nlb_security_group.id] # Allow traffic from nlb
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    # security_groups = [module.load_balancer.alb_security_group.id] # Allow HTTP traffic from alb only
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    # security_groups = [module.load_balancer.load_balancer.nlb_security_group.id]  # Allow HTTPS traffic from alb only
   }
 
   ingress {
@@ -124,3 +143,13 @@ resource "aws_eip" "backend_eip" {
   }
 }
 
+output "backend_id" {
+  description = "The IDs of the backend instance"
+  value       = aws_instance.backend.id
+}
+
+output "bastion_id" {
+  description = "The ID of the bastion instance"
+  value = aws_instance.bastion_host.id
+  
+}
